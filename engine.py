@@ -199,6 +199,9 @@ class Engine:
             # Capture token if there
             if btn.tokenStatus == 1:
                 self.captureToken(btn, player)
+        
+        if self.numMoves == 0:
+            self.rollDiceBtn.configure(bg="#f00")
 
     def showWallFunc(self, btn, player):
         # Shows wall if encounter and enabled
@@ -318,6 +321,7 @@ class Engine:
         self.incPlayerTurn()
         self.rollDiceBtn["state"] = "normal"
         self.rollDiceBtn["text"] = f"Roll Die"
+        self.rollDiceBtn.configure(bg="#fff")
 
         self.endBtn["state"] = "disabled"
 
