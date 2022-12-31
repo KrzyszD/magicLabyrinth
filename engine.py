@@ -19,7 +19,7 @@ def createWindow():
     return root
 
 class Engine:
-    def __init__(self, root, numPlayers, getPlayerTurn, incPlayerTurn, showPath=False):
+    def __init__(self, root, numPlayers, getPlayerTurn, incPlayerTurn, showPath=False, showWall=False, showWallPerma=False):
         self.root = root
         self.numPlayers = numPlayers
         self.getPlayerTurn = getPlayerTurn
@@ -27,6 +27,8 @@ class Engine:
         self.numMoves = 0
 
         self.showPath = showPath
+        self.showWall = showWall
+        self.showWallPerma = showWallPerma
         
         # grid btns
         self.grid = [[] for _ in range(rowSize)]
@@ -37,11 +39,11 @@ class Engine:
         self.clearColor = "SystemButtonFace"
 
         # Grid and controls
-        gridFrame = Canvas(root)
-        controlFrame = Frame(root)
+        self.gridFrame = Canvas(root)
+        self.controlFrame = Frame(root)
 
-        self.setGridBtns(gridFrame)
-        self.setControlBtns(controlFrame)
+        self.setGridBtns()
+        self.setControlBtns()
 
         # Bottom label
         self.label = Label(root, text=f"It is {colors[0]}'s turn")
@@ -51,17 +53,15 @@ class Engine:
         self.makeMaze()
 
         # Shows path
-        # Need to hide buttons to show maze
-        # Restraint of tkinter
         if self.showPath:
-            self.showPaths(gridFrame)
+            self.showPaths()
 
         # print("Available Tokens: ", len(self.avaibleTokens))
     
     
-    def setGridBtns(self, gridFrame):
+    def setGridBtns(self):
         # Sets up the grid
-                
+        gridFrame = self.gridFrame
 
         # Empty image to enable size by pixel
         self.pixel = PhotoImage(width=60, height=60)
@@ -81,10 +81,7 @@ class Engine:
         # Initializes each btn
         for x in range(rowSize):
             for y in range(colSize):
-                # btn = Button(gridFrame,
-                #             height=gridCellSize, width=gridCellSize, 
-                #             image=self.pixel)
-                self.configureGridBtn(gridFrame, x, y)
+                self.configureGridBtn(x, y)
                 
         # Sets grid dimensions
         gridFrame.columnconfigure(tuple(range(rowSize)), weight=1)
@@ -94,8 +91,9 @@ class Engine:
         shuffle(self.avaibleTokens)
         shuffle(self.possWalls)
 
-    def setControlBtns(self, controlFrame): 
+    def setControlBtns(self): 
         # Sets up roll die and end turn btns
+        controlFrame = self.controlFrame
 
         controlFrame.grid(row=1, column=0, sticky="n")
 
@@ -118,16 +116,16 @@ class Engine:
         self.players = players
     
 
-    def configureGridBtn(self, gridFrame, x, y):
+    def configureGridBtn(self, x, y):
         # Configures a grid btn
+        gridFrame = self.gridFrame
+
         btn = CanvasButton(gridFrame, x, y, self.clearColor, self.coin)
 
         # Assigns coordinates and function to btn
         btn.x = x 
         btn.y = y
-        # btn.config(command=lambda: self.gridBtnFunc(btn))
         btn.setCmd(lambda: self.gridBtnFunc(btn) )
-        # btn.grid(column=x, row=y, sticky="n")
 
         # Checks if cell is far enough way from corner
         btn.tokenStatus = 0
@@ -138,7 +136,6 @@ class Engine:
                 break
 
         if btn.tokenAvailable:
-            # btn.configure(image=self.coin)
             self.avaibleTokens.append( (x, y) )
         
         # Finds all neighbors for btn to calc walls
@@ -176,6 +173,9 @@ class Engine:
         self.grid[player.x][player.y].changeColor(self.clearColor)
         
         if self.checkCrossWall(btn):
+            
+            self.showWallFunc(btn, player)
+
             # Update current position
             # Players starting position
             player.x = player.originX
@@ -200,6 +200,37 @@ class Engine:
             if btn.tokenStatus == 1:
                 self.captureToken(btn, player)
 
+    def showWallFunc(self, btn, player):
+        # Shows wall if encounter and enabled
+        if not self.showWall:
+            return
+        
+        bx, by = btn.x, btn.y
+        px, py = player.x, player.y
+
+        offset = gridCellSize // 2
+
+        if bx == px:
+            # Show Horizontal wall
+            wx1 = bx * gridCellSize
+            wy1 = ((by + py) / 2) * gridCellSize + offset
+
+            wx2 = wx1 + gridCellSize
+            wy2 = wy1
+        else: 
+            # Show vertical Wall
+            wx1 = ((bx + px) / 2) * gridCellSize + offset
+            wy1 = by * gridCellSize
+
+            wx2 = wx1
+            wy2 = wy1 + gridCellSize
+
+        # Wall
+        wallID = self.gridFrame.create_line(wx1, wy1, wx2, wy2, fill="red", width=5)
+        
+        if not self.showWallPerma:
+            # Hide wall after delay
+            self.gridFrame.after(1000, self.gridFrame.delete, wallID)
 
     def checkValidMove(self, btn):
         # Checks if a move is valid
@@ -335,12 +366,12 @@ class Engine:
                 self.grid[x1][y1].neigh.append( (x2, y2) )
                 self.grid[x2][y2].neigh.append( (x1, y1) )
             else:
-                # print(f"Add wall {x1, y1} {x2, y2}")
                 count += 1
 
-    def showPaths(self, gridFrame):
-        # Shows all routes, need to disable some buttons to see
-        # since tkinter does not show lines over buttons
+    def showPaths(self):
+        # Shows all routes
+        gridFrame = self.gridFrame
+
         offset = gridCellSize // 2
 
         for x in range(rowSize):
@@ -351,4 +382,4 @@ class Engine:
                     x2 = neigh[0] * gridCellSize + offset
                     y2 = neigh[1] * gridCellSize + offset
 
-                    gridFrame.create_line(x1, y1, x2, y2, fill="black", width =5)
+                    gridFrame.create_line(x1, y1, x2, y2, fill="black", width=5)
