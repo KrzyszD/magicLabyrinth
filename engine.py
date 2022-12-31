@@ -4,26 +4,29 @@ from random import randint, shuffle
 import os
 import math
 import itertools
+from canvas_btn import CanvasButton
 
 def createWindow():
     root = Tk()
 
     root.title("Magic Labyrinth")
 
-    root.geometry(f"{int(rowSize*gridCellSize * 1.1)}x{colSize*gridCellSize+135}")
-    # root.resizable(False, False)
-    # root.rowconfigure(0, weight=1)
+    root.geometry(f"{int(rowSize*gridCellSize * 1.0)}x{colSize*gridCellSize+135}")
+
     root.columnconfigure(0, weight=1)
+    root.rowconfigure(0, weight=1)
 
     return root
 
 class Engine:
-    def __init__(self, root, numPlayers, getPlayerTurn, incPlayerTurn):
+    def __init__(self, root, numPlayers, getPlayerTurn, incPlayerTurn, showPath=False):
         self.root = root
         self.numPlayers = numPlayers
         self.getPlayerTurn = getPlayerTurn
         self.incPlayerTurn = incPlayerTurn
         self.numMoves = 0
+
+        self.showPath = showPath
         
         # grid btns
         self.grid = [[] for _ in range(rowSize)]
@@ -50,16 +53,18 @@ class Engine:
         # Shows path
         # Need to hide buttons to show maze
         # Restraint of tkinter
-        # self.showPath(gridFrame)
+        if self.showPath:
+            self.showPaths(gridFrame)
 
         print("Available Tokens: ", len(self.avaibleTokens))
     
     
     def setGridBtns(self, gridFrame):
         # Sets up the grid
+                
 
         # Empty image to enable size by pixel
-        self.pixel = PhotoImage(width=1, height=1)
+        self.pixel = PhotoImage(width=60, height=60)
         self.avaibleTokens = []
 
         # Gets coin image
@@ -67,7 +72,7 @@ class Engine:
         self.coin = PhotoImage(file=cwd + '\\' + coinPNG)
         
         # Places grid in window
-        gridFrame.grid(row=0, column=0, sticky="n")
+        gridFrame.grid(row=0, column=0, sticky="news")
         
         # Actual grid
         grid = Frame(gridFrame)
@@ -76,10 +81,10 @@ class Engine:
         # Initializes each btn
         for x in range(rowSize):
             for y in range(colSize):
-                btn = Button(gridFrame,
-                            height=gridCellSize, width=gridCellSize, 
-                            image=self.pixel)
-                self.configureGridBtn(btn, x, y)
+                # btn = Button(gridFrame,
+                #             height=gridCellSize, width=gridCellSize, 
+                #             image=self.pixel)
+                self.configureGridBtn(gridFrame, x, y)
                 
         # Sets grid dimensions
         gridFrame.columnconfigure(tuple(range(rowSize)), weight=1)
@@ -113,14 +118,16 @@ class Engine:
         self.players = players
     
 
-    def configureGridBtn(self, btn, x, y):
+    def configureGridBtn(self, gridFrame, x, y):
         # Configures a grid btn
+        btn = CanvasButton(gridFrame, x, y, self.clearColor, self.coin)
 
         # Assigns coordinates and function to btn
         btn.x = x 
         btn.y = y
-        btn.config(command=lambda: self.gridBtnFunc(btn))
-        btn.grid(column=x, row=y, sticky="n")
+        # btn.config(command=lambda: self.gridBtnFunc(btn))
+        btn.setCmd(lambda: self.gridBtnFunc(btn) )
+        # btn.grid(column=x, row=y, sticky="n")
 
         # Checks if cell is far enough way from corner
         btn.tokenStatus = 0
@@ -166,14 +173,14 @@ class Engine:
         player = self.players[playerTurn]
 
         # Clear previous position
-        self.grid[player.x][player.y].configure(bg=self.clearColor)
+        self.grid[player.x][player.y].changeColor(self.clearColor)
         
         if self.checkCrossWall(btn):
             # Update current position
             # Players starting position
             player.x = player.originX
             player.y = player.originY
-            self.grid[player.x][player.y].configure(bg=self.colors[playerTurn])
+            self.grid[player.x][player.y].changeColor(self.colors[playerTurn])
 
             # Update number of moves
             self.numMoves = 0
@@ -183,7 +190,7 @@ class Engine:
             # Update current position
             player.x = btn.x
             player.y = btn.y
-            self.grid[player.x][player.y].configure(bg=self.colors[playerTurn])
+            self.grid[player.x][player.y].changeColor(self.colors[playerTurn])
 
             # Update number of moves
             self.numMoves -= 1
@@ -241,7 +248,7 @@ class Engine:
         coord = self.avaibleTokens.pop()
         
         self.grid[coord[0]][coord[1]].tokenStatus = 1
-        self.grid[coord[0]][coord[1]].configure(image=self.coin)
+        self.grid[coord[0]][coord[1]].configure(True)
 
         # In on a player, capture token
         # Delay by 500ms to let players see
@@ -256,7 +263,7 @@ class Engine:
 
         btn.tokenStatus = 0
         btn.tokenAvailable = 0
-        btn.configure(image=self.pixel)
+        btn.configure(False)
         self.players[playerTurn].points += 1
 
         self.placeToken()
@@ -331,7 +338,7 @@ class Engine:
                 # print(f"Add wall {x1, y1} {x2, y2}")
                 count += 1
 
-    def showPath(self, gridFrame):
+    def showPaths(self, gridFrame):
         # Shows all routes, need to disable some buttons to see
         # since tkinter does not show lines over buttons
         offset = gridCellSize // 2
@@ -339,9 +346,9 @@ class Engine:
         for x in range(rowSize):
             for y in range(colSize):
                 for neigh in self.grid[x][y].neigh:
-                    x1 = x * gridCellSize * 1.02 + offset
-                    y1 = y * gridCellSize * 1.10 + offset
-                    x2 = neigh[0] * gridCellSize * 1.02 + offset
-                    y2 = neigh[1] * gridCellSize * 1.10 + offset
+                    x1 = x * gridCellSize + offset
+                    y1 = y * gridCellSize + offset
+                    x2 = neigh[0] * gridCellSize + offset
+                    y2 = neigh[1] * gridCellSize + offset
 
-                    gridFrame.create_line(x1, y1, x2, y2, fill="blue", width =5)
+                    gridFrame.create_line(x1, y1, x2, y2, fill="black", width =5)

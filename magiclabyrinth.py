@@ -4,7 +4,10 @@ from engine import *
 
 if __name__ == "__main__":
     root = createWindow()
-    gameEngine = Engine(root, numPlayers, getPlayerTurn, incPlayerTurn)
+
+    showMaze = True
+
+    gameEngine = Engine(root, numPlayers, getPlayerTurn, incPlayerTurn, showMaze)
 
     players = [Player(gameEngine) for _ in range(numPlayers)]
 

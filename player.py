@@ -27,7 +27,7 @@ class Player:
     
     def show(self, gameEngine):
         # Show itself in the beginning of the game
-        gameEngine.grid[self.x][self.y].configure(bg=colors[self.id])
+        gameEngine.grid[self.x][self.y].changeColor(colors[self.id])
 
 def getPlayerTurn():
     return playerTurn

@@ -12,4 +12,4 @@ numPlayers = 4
 
 maxDiceNum = 3
 
-numWalls = 100
+numWalls = 10
