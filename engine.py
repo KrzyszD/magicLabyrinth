@@ -56,7 +56,7 @@ class Engine:
         if self.showPath:
             self.showPaths(gridFrame)
 
-        print("Available Tokens: ", len(self.avaibleTokens))
+        # print("Available Tokens: ", len(self.avaibleTokens))
     
     
     def setGridBtns(self, gridFrame):
